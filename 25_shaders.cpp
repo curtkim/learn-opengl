@@ -47,7 +47,7 @@ int main()
 
     // build and compile our shader program
     // ------------------------------------
-    Shader ourShader("25_shader.vs", "25_shader.fs"); // you can name your shader files however you like
+    Shader ourShader("25_vertex.shader", "25_fragment.shader"); // you can name your shader files however you like
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------

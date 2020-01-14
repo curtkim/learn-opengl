@@ -9,12 +9,8 @@ include_directories(.)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-file(GLOB VERTEX_SHADER_FILES "*.vs")
-file(COPY ${VERTEX_SHADER_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
-file(GLOB FRAGMENT_SHADER_FILES "*.fs")
-file(COPY ${FRAGMENT_SHADER_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
+file(GLOB SHADER_FILES "*.shader")
+file(COPY ${SHADER_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 add_executable(23_window 23_window.cpp)
 target_link_libraries(23_window ${CONAN_LIBS} ${OPENGL_LIBRARY})
