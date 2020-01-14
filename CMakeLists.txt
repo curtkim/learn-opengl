@@ -9,8 +9,8 @@ include_directories(.)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-add_executable(02_window 02_window.cpp)
-target_link_libraries(02_window ${CONAN_LIBS} ${OPENGL_LIBRARY})
+add_executable(23_window 23_window.cpp)
+target_link_libraries(23_window ${CONAN_LIBS} ${OPENGL_LIBRARY})
 
-add_executable(02_triangle 02_triangle.cpp)
-target_link_libraries(02_triangle ${CONAN_LIBS} ${OPENGL_LIBRARY})
+add_executable(24_triangle 24_triangle.cpp)
+target_link_libraries(24_triangle ${CONAN_LIBS} ${OPENGL_LIBRARY})
