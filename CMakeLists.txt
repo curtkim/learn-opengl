@@ -11,6 +11,8 @@ conan_basic_setup()
 
 file(GLOB SHADER_FILES "*.shader")
 file(COPY ${SHADER_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
+file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
+
 
 add_executable(23_window 23_window.cpp)
 target_link_libraries(23_window ${CONAN_LIBS} ${OPENGL_LIBRARY})
@@ -20,3 +22,6 @@ target_link_libraries(24_triangle ${CONAN_LIBS} ${OPENGL_LIBRARY})
 
 add_executable(25_shaders 25_shaders.cpp)
 target_link_libraries(25_shaders ${CONAN_LIBS} ${OPENGL_LIBRARY})
+
+add_executable(26_textures 26_textures.cpp)
+target_link_libraries(26_textures ${CONAN_LIBS} ${OPENGL_LIBRARY})
