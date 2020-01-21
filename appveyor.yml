@@ -5,7 +5,7 @@ stack: python 3
 install:
 - echo "Downloading conan..."
 #- set PATH=%PATH%;%PYTHON%/Scripts/
-- pip.exe install conan
+- pip install conan
 - conan user # Create the conan data directory
 - conan --version
 
