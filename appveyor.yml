@@ -11,6 +11,7 @@ install:
 
 build_script:
 - mkdir build
+- conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 - conan install .
 - cd build
 - cmake ..
