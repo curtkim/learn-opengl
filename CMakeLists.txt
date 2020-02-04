@@ -25,3 +25,6 @@ target_link_libraries(25_shaders ${CONAN_LIBS} ${OPENGL_LIBRARY})
 
 add_executable(26_textures 26_textures.cpp)
 target_link_libraries(26_textures ${CONAN_LIBS} ${OPENGL_LIBRARY})
+
+add_executable(27_transformations 27_transformations.cpp)
+target_link_libraries(27_transformations ${CONAN_LIBS} ${OPENGL_LIBRARY})
