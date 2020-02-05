@@ -13,21 +13,7 @@ file(GLOB SHADER_FILES "*.shader")
 file(COPY ${SHADER_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
-
-add_executable(23_window 23_window.cpp)
-target_link_libraries(23_window ${CONAN_LIBS} ${OPENGL_LIBRARY})
-
-add_executable(24_triangle 24_triangle.cpp)
-target_link_libraries(24_triangle ${CONAN_LIBS} ${OPENGL_LIBRARY})
-
-add_executable(25_shaders 25_shaders.cpp)
-target_link_libraries(25_shaders ${CONAN_LIBS} ${OPENGL_LIBRARY})
-
-add_executable(26_textures 26_textures.cpp)
-target_link_libraries(26_textures ${CONAN_LIBS} ${OPENGL_LIBRARY})
-
-add_executable(27_transformations 27_transformations.cpp)
-target_link_libraries(27_transformations ${CONAN_LIBS} ${OPENGL_LIBRARY})
-
-add_executable(28_coordinates 28_coordinates.cpp)
-target_link_libraries(28_coordinates ${CONAN_LIBS} ${OPENGL_LIBRARY})
+foreach(APP 23_window 24_triangle 25_shaders 26_textures 27_transformations 28_coordinates)
+    add_executable(${APP} ${APP}.cpp)
+    target_link_libraries(${APP} ${CONAN_LIBS} ${OPENGL_LIBRARY})
+endforeach()
