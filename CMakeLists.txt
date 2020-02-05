@@ -28,3 +28,6 @@ target_link_libraries(26_textures ${CONAN_LIBS} ${OPENGL_LIBRARY})
 
 add_executable(27_transformations 27_transformations.cpp)
 target_link_libraries(27_transformations ${CONAN_LIBS} ${OPENGL_LIBRARY})
+
+add_executable(28_coordinates 28_coordinates.cpp)
+target_link_libraries(28_coordinates ${CONAN_LIBS} ${OPENGL_LIBRARY})
