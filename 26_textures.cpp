@@ -9,6 +9,42 @@
 
 #include <iostream>
 
+const char *VERTEX_SHADER_SOURCE = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aColor;
+layout (location = 2) in vec2 aTexCoord;
+
+out vec3 ourColor;
+out vec2 TexCoord;
+
+void main()
+{
+    gl_Position = vec4(aPos, 1.0);
+    ourColor = aColor;
+    TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+}
+)";
+
+const char *FRAGMENT_SHADER_SOURCE = R"(
+#version 330 core
+in vec3 ourColor;
+in vec2 TexCoord;
+
+out vec4 FragColor;
+
+// texture sampler
+uniform sampler2D texture1;
+uniform sampler2D texture2;
+
+void main()
+{
+    //FragColor = texture(texture1, TexCoord);
+    //FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1.0);
+    FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2);
+}
+)";
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -52,7 +88,8 @@ int main()
 
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader ourShader("26_vertex.shader", "26_fragment.shader");
+    Shader ourShader(VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE); // you can name your shader files however you like
+
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
