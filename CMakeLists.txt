@@ -19,5 +19,5 @@ foreach(APP
         43_model_load
         55_framebuffer)
     add_executable(${APP} ${APP}.cpp)
-    target_link_libraries(${APP} ${CONAN_LIBS} ${OPENGL_LIBRARY})
+    target_link_libraries(${APP} ${CONAN_LIBS} ${OPENGL_LIBRARY} X11)
 endforeach()
