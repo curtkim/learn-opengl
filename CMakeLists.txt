@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.15)
 project(conan-opengl)
 
-add_definitions("-std=c++11")
+add_definitions("-std=c++17")
 
 find_package(OpenGL REQUIRED)
 include_directories(.)
@@ -21,4 +21,10 @@ foreach(APP
         91_geometry_shader_houses)
     add_executable(${APP} ${APP}.cpp)
     target_link_libraries(${APP} ${CONAN_LIBS} ${OPENGL_LIBRARY} X11)
+endforeach()
+
+foreach(APP
+    23_window 25_shaders)
+    add_executable(modern_${APP} moderngl/${APP}.cpp)
+    target_link_libraries(modern_${APP} ${CONAN_LIBS} ${OPENGL_LIBRARY} X11)
 endforeach()
