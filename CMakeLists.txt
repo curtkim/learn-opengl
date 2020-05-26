@@ -19,7 +19,8 @@ foreach(APP
         43_model_load
         55_framebuffer
         91_geometry_shader_houses
-        260_textures)
+        26_textures_each_loop
+        )
     add_executable(${APP} ${APP}.cpp)
     target_link_libraries(${APP} ${CONAN_LIBS} ${OPENGL_LIBRARY} X11)
 endforeach()
