@@ -162,7 +162,7 @@ int main() {
 
   const char * filename1 = "resources/textures/awesomeface.png";
   unsigned int texture1 = load_texture(filename1, false, GL_RGBA);
-  
+
   std::cout << texture0 << " " << texture1 << std::endl; // print 1 2
 
   // build and compile our shader zprogram

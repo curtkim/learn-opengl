@@ -38,22 +38,19 @@ out vec4 FragColor;
 in vec2 TexCoord;
 
 // texture samplers
-uniform sampler2D texture1;
+uniform sampler2D texture0;
 
 void main()
 {
 	// linearly interpolate between both textures (80% container, 20% awesomeface)
-	FragColor = texture(texture1, TexCoord);
+	FragColor = texture(texture0, TexCoord);
 }
 )";
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
-
 void processInput(GLFWwindow *window);
 
 // settings
@@ -183,6 +180,7 @@ int main() {
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
+
     // texture coord attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *) (3 * sizeof(float)));
     glEnableVertexAttribArray(1);
@@ -190,10 +188,10 @@ int main() {
 
   // load and create a texture
   // -------------------------
-  unsigned int texture1;
+  unsigned int texture0;
   {
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
+    glGenTextures(1, &texture0);
+    glBindTexture(GL_TEXTURE_2D, texture0);
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -213,7 +211,7 @@ int main() {
     stbi_image_free(data);
   }
 
-  std::cout << texture1 << " " << GL_TEXTURE0 << std::endl;
+  std::cout << texture0 << " " << GL_TEXTURE0 << std::endl;
 
   // build and compile our shader zprogram
   // ------------------------------------
@@ -228,6 +226,7 @@ int main() {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
+    // std::cout << "deltaTime " << deltaTime << " lastFrame " << lastFrame << std::endl;
 
     // input
     // -----
@@ -240,11 +239,11 @@ int main() {
 
     // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
+    glBindTexture(GL_TEXTURE_2D, texture0);
 
     // activate shader
     ourShader.use();
-    ourShader.setInt("texture1", 0);
+    ourShader.setInt("texture0", 0);
 
     // pass projection matrix to shader (note that in this case it could change every frame)
     glm::mat4 projection = glm::perspective(
