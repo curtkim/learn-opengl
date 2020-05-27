@@ -18,6 +18,7 @@ foreach(APP
         31_color 32_basic_light 33_material 34_lighting_map 35_light_caster 36_multi_light
         43_model_load
         55_framebuffer
+        61_control
         91_geometry_shader_houses
         26_textures_each_loop
         )
