@@ -180,8 +180,9 @@ int main() {
     return -1;
   }
 
-  glfwSetWindowUserPointer(window, &myContext);
   glfwMakeContextCurrent(window);
+
+  glfwSetWindowUserPointer(window, &myContext);
   glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
     auto &myContext = *static_cast<MyContext *>(glfwGetWindowUserPointer(window));
     myContext.framebuffer_size_callback(window, width, height);
