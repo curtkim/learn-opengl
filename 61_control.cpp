@@ -47,7 +47,7 @@ void main()
 )";
 
 
-struct MyContext {
+struct MyHandler {
   // settings
   const unsigned int SCR_WIDTH = 800;
   const unsigned int SCR_HEIGHT = 600;
@@ -60,9 +60,8 @@ struct MyContext {
 
   // timing
   float deltaTime = 0.0f;  // time between current frame and last frame
-  float lastFrame = 0.0f;
 
-  MyContext() : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {};
+  MyHandler() : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {};
 
   // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
   // ---------------------------------------------------------------------------------------------------------
@@ -111,6 +110,27 @@ struct MyContext {
   void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(yoffset);
   }
+
+  void bindToWindow(GLFWwindow *window) {
+    // bind window callback
+    glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
+        auto &myContext = *static_cast<MyHandler *>(glfwGetWindowUserPointer(window));
+        myContext.framebuffer_size_callback(window, width, height);
+    });
+    glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xpos, double ypos) {
+        auto &myContext = *static_cast<MyHandler *>(glfwGetWindowUserPointer(window));
+        myContext.mouse_callback(window, xpos, ypos);
+    });
+    glfwSetScrollCallback(window, [](GLFWwindow *window, double xoffset, double yoffset) {
+        auto &myContext = *static_cast<MyHandler *>(glfwGetWindowUserPointer(window));
+        myContext.scroll_callback(window, xoffset, yoffset);
+    });
+
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+  }
 };
 
 
@@ -120,10 +140,10 @@ auto make_vertex_array() {
   // ------------------------------------------------------------------
   const float vertices[] = {
     // positions          // colors           // texture coords
-    2.5f, 2.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
-    2.5f, -2.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
-    -2.5f, -2.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
-    -2.5f, 2.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
+    2.5f, 2.5f, 0.0f,     1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+    2.5f, -2.5f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+    -2.5f, -2.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+    -2.5f, 2.5f, 0.0f,    1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
   };
 
   const unsigned int indices[] = {
@@ -159,7 +179,7 @@ auto make_vertex_array() {
 
 int main() {
 
-  MyContext myContext;
+  MyHandler myHandler;
 
   // glfw: initialize and configure
   glfwInit();
@@ -173,7 +193,7 @@ int main() {
 
   // glfw window creation
   // --------------------
-  GLFWwindow *window = glfwCreateWindow(myContext.SCR_WIDTH, myContext.SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+  GLFWwindow *window = glfwCreateWindow(myHandler.SCR_WIDTH, myHandler.SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
   if (window == NULL) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -181,23 +201,7 @@ int main() {
   }
 
   glfwMakeContextCurrent(window);
-
-  glfwSetWindowUserPointer(window, &myContext);
-  glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
-    auto &myContext = *static_cast<MyContext *>(glfwGetWindowUserPointer(window));
-    myContext.framebuffer_size_callback(window, width, height);
-  });
-  glfwSetCursorPosCallback(window, [](GLFWwindow *window, double xpos, double ypos) {
-    auto &myContext = *static_cast<MyContext *>(glfwGetWindowUserPointer(window));
-    myContext.mouse_callback(window, xpos, ypos);
-  });
-  glfwSetScrollCallback(window, [](GLFWwindow *window, double xoffset, double yoffset) {
-    auto &myContext = *static_cast<MyContext *>(glfwGetWindowUserPointer(window));
-    myContext.scroll_callback(window, xoffset, yoffset);
-  });
-
-  // tell GLFW to capture our mouse
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  myHandler.bindToWindow(window);
 
   // glad: load all OpenGL function pointers
   if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
@@ -208,25 +212,28 @@ int main() {
   // configure global opengl state
   glEnable(GL_DEPTH_TEST);
 
+  // model
   auto[VAO, VBO, EBO] = make_vertex_array();
 
-  // load and create a texture
+  // texture
   unsigned int texture0 = load_texture("resources/textures/container.jpg", true, GL_RGB);
   std::cout << texture0 << " " << GL_TEXTURE0 << std::endl;
 
+  // shader
   Shader ourShader(VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE);
 
+  float lastFrame = 0;
   // render loop
   while (!glfwWindowShouldClose(window)) {
     // per-frame time logic
     // --------------------
     float currentFrame = glfwGetTime();
-    myContext.deltaTime = currentFrame - myContext.lastFrame;
-    myContext.lastFrame = currentFrame;
+    myHandler.deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
     // std::cout << "deltaTime " << deltaTime << " lastFrame " << lastFrame << std::endl;
 
     // input
-    myContext.processInput(window);
+    myHandler.processInput(window);
 
     // render
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -240,20 +247,20 @@ int main() {
     ourShader.use();
     ourShader.setInt("texture0", 0);
 
-    // pass projection matrix to shader (note that in this case it could change every frame)
-    glm::mat4 projection = glm::perspective(glm::radians(myContext.camera.Zoom),
-                                            (float) myContext.SCR_WIDTH / (float) myContext.SCR_HEIGHT, 0.1f, 100.0f);
+    // projection
+    glm::mat4 projection = glm::perspective(glm::radians(myHandler.camera.Zoom),
+                                            (float) myHandler.SCR_WIDTH / (float) myHandler.SCR_HEIGHT, 0.1f, 100.0f);
     ourShader.setMat4("projection", projection);
 
-    // camera/view transformation
-    glm::mat4 view = myContext.camera.GetViewMatrix();
-    ourShader.setMat4("view", view);
+    // camera view transformation
+    ourShader.setMat4("view", myHandler.camera.GetViewMatrix());
 
-    // render boxes
-    glBindVertexArray(VAO);
+    // model
     glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     ourShader.setMat4("model", model);
 
+    // render
+    glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
