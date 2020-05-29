@@ -1,16 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
 project(conan-opengl)
 
-add_definitions("-std=c++17")
-
 find_package(OpenGL REQUIRED)
 include_directories(.)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-#file(GLOB SHADER_FILES "*.shader")
-#file(COPY ${SHADER_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 file(COPY resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 foreach(APP
@@ -24,6 +20,7 @@ foreach(APP
         )
     add_executable(${APP} ${APP}.cpp)
     target_link_libraries(${APP} ${CONAN_LIBS} ${OPENGL_LIBRARY} X11)
+    target_compile_features(${APP} PUBLIC cxx_std_17)
 endforeach()
 
 foreach(APP

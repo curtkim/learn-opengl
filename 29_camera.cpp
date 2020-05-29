@@ -53,9 +53,6 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
 
 // world space positions of our cubes
 const glm::vec3 cubePositions[] = {
@@ -71,6 +68,9 @@ const glm::vec3 cubePositions[] = {
   glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));

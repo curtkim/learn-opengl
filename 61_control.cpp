@@ -1,17 +1,16 @@
-#define STB_IMAGE_IMPLEMENTATION
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <stb_image.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <shader_s.h>
-#include <camera.h>
 
 #include <iostream>
+#include <tuple>
+
+#include "shader_s.h"
+#include "camera.h"
+#include "utils.hpp"
+
 
 const char *VERTEX_SHADER_SOURCE = R"(
 #version 330 core
@@ -57,8 +56,6 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-
-
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
@@ -69,9 +66,53 @@ bool firstMouse = true;
 float deltaTime = 0.0f;  // time between current frame and last frame
 float lastFrame = 0.0f;
 
+
+auto make_vertex_array(){
+  unsigned int VAO, VBO, EBO;
+  // set up vertex data (and buffer(s)) and configure vertex attributes
+  // ------------------------------------------------------------------
+  const float vertices[] = {
+    // positions          // colors           // texture coords
+    2.5f, 2.5f, 0.0f,     1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+    2.5f, -2.5f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+    -2.5f, -2.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+    -2.5f, 2.5f, 0.0f,    1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
+  };
+
+  const unsigned int indices[] = {
+    0, 1, 3, // first triangle
+    1, 2, 3  // second triangle
+  };
+
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+  glGenBuffers(1, &EBO);
+
+  glBindVertexArray(VAO);
+
+  // 1. vertex
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  // position attribute
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
+  glEnableVertexAttribArray(0);
+  // color attribute
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+  // texture coord attribute
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
+  glEnableVertexAttribArray(2);
+
+  // 2. index
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+  return std::make_tuple(VAO, VBO, EBO);
+}
+
 int main() {
+
   // glfw: initialize and configure
-  // ------------------------------
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -98,92 +139,23 @@ int main() {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // glad: load all OpenGL function pointers
-  // ---------------------------------------
   if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return -1;
   }
 
   // configure global opengl state
-  // -----------------------------
   glEnable(GL_DEPTH_TEST);
 
-  unsigned int VBO, VAO, EBO;
-  {
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    const float vertices[] = {
-      // positions          // colors           // texture coords
-      2.5f, 2.5f, 0.0f,     1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-      2.5f, -2.5f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-      -2.5f, -2.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-      -2.5f, 2.5f, 0.0f,    1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
-    };
-
-    const unsigned int indices[] = {
-      0, 1, 3, // first triangle
-      1, 2, 3  // second triangle
-    };
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    // 1. vertex
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    // 2. index
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-  }
+  auto [VAO, VBO, EBO] = make_vertex_array();
 
   // load and create a texture
-  // -------------------------
-  unsigned int texture0;
-  {
-    glGenTextures(1, &texture0);
-    glBindTexture(GL_TEXTURE_2D, texture0);
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-    unsigned char *data = stbi_load("resources/textures/container.jpg", &width, &height, &nrChannels, 0);
-    if (data) {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-      glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-      std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-  }
-
+  unsigned int texture0 = load_texture("resources/textures/container.jpg", true, GL_RGB);
   std::cout << texture0 << " " << GL_TEXTURE0 << std::endl;
 
-  // build and compile our shader zprogram
-  // ------------------------------------
   Shader ourShader(VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE);
 
-
   // render loop
-  // -----------
   while (!glfwWindowShouldClose(window)) {
     // per-frame time logic
     // --------------------
@@ -193,11 +165,9 @@ int main() {
     // std::cout << "deltaTime " << deltaTime << " lastFrame " << lastFrame << std::endl;
 
     // input
-    // -----
     processInput(window);
 
     // render
-    // ------
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -210,8 +180,7 @@ int main() {
     ourShader.setInt("texture0", 0);
 
     // pass projection matrix to shader (note that in this case it could change every frame)
-    glm::mat4 projection = glm::perspective(
-      glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
     ourShader.setMat4("projection", projection);
 
     // camera/view transformation
@@ -226,22 +195,20 @@ int main() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    // -------------------------------------------------------------------------------
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
   // optional: de-allocate all resources once they've outlived their purpose:
-  // ------------------------------------------------------------------------
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
   glDeleteBuffers(1, &EBO);
 
   // glfw: terminate, clearing all previously allocated GLFW resources.
-  // ------------------------------------------------------------------
   glfwTerminate();
   return 0;
 }
+
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
