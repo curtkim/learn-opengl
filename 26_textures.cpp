@@ -127,13 +127,11 @@ int main() {
 
   // load and create a texture
   // -------------------------
-  const char * filename0 = "resources/textures/container.jpg";
-  unsigned int texture0 = load_texture(filename0, true, GL_RGB);
+  unsigned int texture0 = load_texture("resources/textures/container.jpg", true, GL_RGB);
+  unsigned int texture1 = load_texture("resources/textures/awesomeface.png", false, GL_RGBA);
 
-  const char * filename1 = "resources/textures/awesomeface.png";
-  unsigned int texture1 = load_texture(filename1, false, GL_RGBA);
-
-  std::cout << texture0 << " " << texture1 << std::endl; // print 1 2
+  std::cout << "texture0=" << texture0 << " texture1=" << texture1 << std::endl; // print 1 2
+  std::cout << "GL_TEXTURE0=" << GL_TEXTURE0 << " GL_TEXTURE1=" << GL_TEXTURE1 << std::endl;
 
   // build and compile our shader zprogram
   // ------------------------------------
@@ -176,6 +174,8 @@ int main() {
 
   // optional: de-allocate all resources once they've outlived their purpose:
   // ------------------------------------------------------------------------
+  glDeleteTextures(1, &texture0);
+  glDeleteTextures(1, &texture1);
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
   glDeleteBuffers(1, &EBO);

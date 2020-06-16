@@ -204,7 +204,8 @@ int main() {
   myHandler.bindToWindow(window);
 
   // glad: load all OpenGL function pointers
-  if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
+  if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAll
+  ddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return -1;
   }

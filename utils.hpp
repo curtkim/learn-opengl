@@ -5,14 +5,13 @@
 #include <stb_image.h>
 
 unsigned int load_texture(const char * filename, bool flip_vertically, int color_type) {
-  unsigned int texture0;
+  unsigned int texture_id;
 
-  glGenTextures(1, &texture0);
-  std::cout << "glGenTextures " << texture0 << std::endl;
-  glBindTexture(GL_TEXTURE_2D, texture0);
+  glGenTextures(1, &texture_id);
+  std::cout << "glGenTextures " << texture_id << std::endl;
+  glBindTexture(GL_TEXTURE_2D, texture_id);
   // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                  GL_REPEAT);  // set texture wrapping to GL_REPEAT (default wrapping method)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   // set texture filtering parameters
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -30,6 +29,7 @@ unsigned int load_texture(const char * filename, bool flip_vertically, int color
   } else {
     std::cout << "Failed to load texture" << std::endl;
   }
+
   stbi_image_free(data);
-  return texture0;
+  return texture_id;
 }
