@@ -1,3 +1,10 @@
+// The final rendering destination of the OpenGL pipeline is called [the] framebuffer.
+// whereas
+// renderbuffer object is newly introduced for offscreen rendering.
+// It allows to render a scene directly to a renderbuffer object, instead of rendering to a texture object.
+// Renderbuffer is simply a data storage object containing a single image of a renderable internal format.
+// It is used to store OpenGL logical buffers that do not have corresponding texture format, such as stencil or depth buffer.
+
 #define STB_IMAGE_IMPLEMENTATION
 
 #include <glad/glad.h>
@@ -225,12 +232,17 @@ auto make_framebuffer_and_texture() {
   unsigned int rbo;
   glGenRenderbuffers(1, &rbo);
   glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+  // use a single renderbuffer object for both a depth AND stencil buffer.
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
 
-  // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+  // now actually attach it
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+  // now that we actually created the framebuffer and
+  // added all attachments we want to check if it is actually complete now
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   return std::make_tuple(framebuffer, textureColorbuffer);
