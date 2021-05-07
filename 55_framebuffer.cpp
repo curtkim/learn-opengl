@@ -150,16 +150,7 @@ auto load_model() {
     -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
     5.0f, -0.5f, -5.0f,  2.0f, 2.0f
   };
-  float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-    // positions   // texCoords
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  0.0f, 0.0f,
-    1.0f, -1.0f,  1.0f, 0.0f,
 
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    1.0f, -1.0f,  1.0f, 0.0f,
-    1.0f,  1.0f,  1.0f, 1.0f
-  };
   // cube VAO
   unsigned int cubeVAO, cubeVBO;
   glGenVertexArrays(1, &cubeVAO);
@@ -184,22 +175,37 @@ auto load_model() {
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-  // screen quad VAO
-  unsigned int quadVAO, quadVBO;
-  glGenVertexArrays(1, &quadVAO);
-  glGenBuffers(1, &quadVBO);
-  glBindVertexArray(quadVAO);
-  glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-  return std::make_tuple(cubeVAO, cubeVBO, planeVAO, planeVBO, quadVAO, quadVBO);
+  return std::make_tuple(cubeVAO, cubeVBO, planeVAO, planeVBO);
 }
 
-auto make_framebuffer_texture() {
+auto load_quad_model() {
+    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+            // positions   // texCoords
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+            1.0f, -1.0f,  1.0f, 0.0f,
+
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            1.0f, -1.0f,  1.0f, 0.0f,
+            1.0f,  1.0f,  1.0f, 1.0f
+    };
+
+    // screen quad VAO
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+    return std::make_tuple(quadVAO, quadVBO);
+}
+
+auto make_framebuffer_and_texture() {
   // framebuffer configuration
   // -------------------------
   unsigned int framebuffer;
@@ -221,6 +227,7 @@ auto make_framebuffer_texture() {
   glBindRenderbuffer(GL_RENDERBUFFER, rbo);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+
   // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
@@ -315,7 +322,8 @@ int main()
     Shader shader(VERTEX_SHADER, FRAGMENT_SHADER);
     Shader screenShader(SCREEN_VERTEXT_SHADER, SCREEN_FRAGMENT_SHADER);
 
-    auto [cubeVAO, cubeVBO, planeVAO, planeVBO, quadVAO, quadVBO] = load_model();
+    auto [cubeVAO, cubeVBO, planeVAO, planeVBO] = load_model();
+    auto [quadVAO, quadVBO] = load_quad_model();
 
     // load textures
     unsigned int cubeTexture = loadTexture("resources/textures/marble.jpg");
@@ -329,7 +337,7 @@ int main()
     screenShader.setInt("screenTexture", 0);
 
     // framebuffer, textureColorbuffer
-    auto [framebuffer, textureColorbuffer] = make_framebuffer_texture();
+    auto [framebuffer, textureColorbuffer] = make_framebuffer_and_texture();
 
     // render loop
     while (!glfwWindowShouldClose(window))
@@ -344,7 +352,10 @@ int main()
         processInput(window);
 
         // render
-        render_inner(framebuffer, shader, cubeVAO, cubeTexture, planeVAO, floorTexture);
+        render_inner(framebuffer,
+                     shader,
+                     cubeVAO, cubeTexture,
+                     planeVAO, floorTexture);
 
         // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
