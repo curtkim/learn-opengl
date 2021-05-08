@@ -80,6 +80,92 @@ void main()
 }
 )";
 
+const char *SCREEN_FRAGMENT_SHADER_INVERSE = R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+
+void main()
+{
+    FragColor = vec4(vec3(1.0 - texture(screenTexture, TexCoords)), 1.0);
+}
+)";
+
+const char *SCREEN_FRAGMENT_SHADER_GRAYSCALE = R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+
+void main()
+{
+    FragColor = texture(screenTexture, TexCoords);
+    float average = 0.2126 * FragColor.r + 0.7152 * FragColor.g + 0.0722 * FragColor.b;
+    FragColor = vec4(average, average, average, 1.0);
+}
+)";
+
+
+const char *SCREEN_FRAGMENT_SHADER_KERNEL = R"(
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+
+const float offset = 1.0 / 300.0;
+
+void main()
+{
+    vec2 offsets[9] = vec2[](
+        vec2(-offset,  offset), // 좌측 상단
+        vec2( 0.0f,    offset), // 중앙 상단
+        vec2( offset,  offset), // 우측 상단
+        vec2(-offset,  0.0f),   // 좌측 중앙
+        vec2( 0.0f,    0.0f),   // 정중앙
+        vec2( offset,  0.0f),   // 우측 중앙
+        vec2(-offset, -offset), // 좌측 하단
+        vec2( 0.0f,   -offset), // 중앙 하단
+        vec2( offset, -offset)  // 우측 하단
+    );
+
+    /*
+    // sharpen
+    float kernel[9] = float[](
+        -1, -1, -1,
+        -1,  9, -1,
+        -1, -1, -1
+    );
+    */
+
+    // blur
+    float kernel[9] = float[](
+        1.0 / 16, 2.0 / 16, 1.0 / 16,
+        2.0 / 16, 4.0 / 16, 2.0 / 16,
+        1.0 / 16, 2.0 / 16, 1.0 / 16
+    );
+
+    vec3 sampleTex[9];
+    for(int i = 0; i < 9; i++)
+    {
+        sampleTex[i] = vec3(texture(screenTexture, TexCoords.st + offsets[i]));
+    }
+    vec3 col = vec3(0.0);
+    for(int i = 0; i < 9; i++)
+        col += sampleTex[i] * kernel[i];
+
+    FragColor = vec4(col, 1.0);
+}
+)";
+
+
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -220,13 +306,23 @@ auto make_framebuffer_and_texture() {
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
   // create a color attachment texture
+  // Framebuffer를 위한 텍스처를 생성하는 것은 일반적인 텍스처와 거의 비슷합니다.
+  // 여기에서 큰 차이점은 텍스처의 크기를 스크린 크기로 설정한다는 것과 텍스처의 data 파라미터에 NULL을 집어넣는다는 것입니다
   unsigned int textureColorbuffer;
   glGenTextures(1, &textureColorbuffer);
   glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  // 텍스처를 생성했으므로 이제 마지막 해야할 일은 이 텍스처를 실제로 framebuffer에 첨부하는 것입니다.
+  // - target: 텍스처를 첨부할 타겟 framebuffer(draw, read 혹은 둘다)
+  // - attachment: 첨부할 첨부물의 유형. 지금 우리는 color 첨부물을 첨부하고 있습니다. 마지막에 붙은 0은 우리가 하나 이상의 color 첨부물을 첨부할 수 있다는 것을 암시합니다. 이는 나중에 다루도록 하겠습니다.
+  // - textarget: 첨부하기 원하는 텍스처의 유형
+  // - texture: 첨부할 실제 텍스처
+  // - level: Mipmap 레벨. 우리는 0으로 유지할것입니다.
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+
 
   // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
   unsigned int rbo;
@@ -332,13 +428,13 @@ int main()
     // build and compile shaders
     // -------------------------
     Shader shader(VERTEX_SHADER, FRAGMENT_SHADER);
-    Shader screenShader(SCREEN_VERTEXT_SHADER, SCREEN_FRAGMENT_SHADER);
+    Shader screenShader(SCREEN_VERTEXT_SHADER, SCREEN_FRAGMENT_SHADER_KERNEL);
 
     auto [cubeVAO, cubeVBO, planeVAO, planeVBO] = load_model();
     auto [quadVAO, quadVBO] = load_quad_model();
 
     // load textures
-    unsigned int cubeTexture = loadTexture("resources/textures/marble.jpg");
+    unsigned int cubeTexture = loadTexture("resources/textures/container.jpg");
     unsigned int floorTexture = loadTexture("resources/textures/metal.png");
 
     // shader configuration
@@ -363,24 +459,27 @@ int main()
         // input
         processInput(window);
 
-        // render
+        // render to framebuffer
         render_inner(framebuffer,
                      shader,
                      cubeVAO, cubeTexture,
                      planeVAO, floorTexture);
 
-        // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-        // clear all relevant buffers
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessery actually, since we won't be able to see behind the quad anyways)
-        glClear(GL_COLOR_BUFFER_BIT);
+        // render to screen
+        {
+            // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            // clear all relevant buffers
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        screenShader.use();
-        glBindVertexArray(quadVAO);
-        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
+            screenShader.use();
+            glBindVertexArray(quadVAO);
+            // use the color attachment texture as the texture of the quad plane
+            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -391,12 +490,18 @@ int main()
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &cubeVAO);
     glDeleteBuffers(1, &cubeVBO);
-
     glDeleteVertexArrays(1, &planeVAO);
     glDeleteBuffers(1, &planeVBO);
-
     glDeleteVertexArrays(1, &quadVAO);
     glDeleteBuffers(1, &quadVBO);
+
+    printf("delete framebuffer\n");
+    glDeleteFramebuffers(1, &framebuffer);
+
+    printf("delete textureColorbuffer cubeTexture floorTexture\n");
+    glDeleteTextures(1, &textureColorbuffer);
+    glDeleteTextures(1, &cubeTexture);
+    glDeleteTextures(1, &floorTexture);
 
     glfwTerminate();
     return 0;
