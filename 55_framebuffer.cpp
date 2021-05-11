@@ -341,7 +341,7 @@ auto make_framebuffer_and_texture() {
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  return std::make_tuple(framebuffer, textureColorbuffer);
+  return std::make_tuple(framebuffer, textureColorbuffer, rbo);
 }
 
 void render_inner(unsigned int framebuffer, Shader shader, unsigned int cubeVAO, unsigned int cubeTexture, unsigned int planeVAO, unsigned int floorTexture) {
@@ -444,8 +444,7 @@ int main()
     screenShader.use();
     screenShader.setInt("screenTexture", 0);
 
-    // framebuffer, textureColorbuffer
-    auto [framebuffer, textureColorbuffer] = make_framebuffer_and_texture();
+    auto [framebuffer, textureColorbuffer, depthStencilRenderBuffer] = make_framebuffer_and_texture();
 
     // render loop
     while (!glfwWindowShouldClose(window))
@@ -502,6 +501,9 @@ int main()
     glDeleteTextures(1, &textureColorbuffer);
     glDeleteTextures(1, &cubeTexture);
     glDeleteTextures(1, &floorTexture);
+
+    printf("delete depthStencilRenderBuffer\n");
+    glDeleteRenderbuffers(1, &depthStencilRenderBuffer);
 
     glfwTerminate();
     return 0;
